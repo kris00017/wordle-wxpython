@@ -66,6 +66,9 @@ class JuegoPanel(wx.Panel):
         self.txt_estado.SetFont(wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
         layout.Add(self.txt_estado, 0, wx.ALIGN_CENTER | wx.TOP, 10)
         
+        # Deja esta línea bien alineada con 8 espacios:
+        self.historial_pdf = []
+        
         # Controles inferiores
         self.btn_reintentar = wx.Button(self, label="Volver a Intentar")
         self.btn_reintentar.SetBackgroundColour(wx.Colour(83, 141, 78))
@@ -112,6 +115,9 @@ class JuegoPanel(wx.Panel):
         self.palabra_oculta = random.choice(LISTA_PALABRAS).upper()
         self.intento_actual = 0
         self.letra_actual = 0
+        
+        # Limpiar el historial de la partida anterior al iniciar un juego nuevo
+        self.historial_pdf = []
         
         # Limpieza manual imperativa de celdas
         for f in range(INTENTOS_MAX):
@@ -172,9 +178,16 @@ class JuegoPanel(wx.Panel):
 
         cod = event.GetKeyCode()
         
-        # Verificación rústica de caracteres
-        if (cod >= 65 and cod <= 90) or (cod >= 97 and cod <= 122):
+        # Verificación rústica de caracteres incluyendo Ñ/ñ y tildes comunes
+        if (cod >= 65 and cod <= 90) or (cod >= 97 and cod <= 122) or cod == 209 or cod == 241 or cod in (225, 233, 237, 243, 250, 193, 201, 205, 211, 218):
             char_upper = chr(cod).upper()
+            # Mapeo manual para normalizar tildes si es necesario
+            if char_upper == 'Á': char_upper = 'A'
+            elif char_upper == 'É': char_upper = 'E'
+            elif char_upper == 'Í': char_upper = 'I'
+            elif char_upper == 'Ó': char_upper = 'O'
+            elif char_upper == 'Ú': char_upper = 'U'
+            
             if self.letra_actual < LARGO_PALABRA:
                 self.grilla_letras[self.intento_actual][self.letra_actual] = char_upper
                 self.labels[self.intento_actual][self.letra_actual].SetLabel(char_upper)
@@ -198,6 +211,9 @@ class JuegoPanel(wx.Panel):
         palabra_intento = ""
         for n in range(5):
             palabra_intento = palabra_intento + str(self.grilla_letras[fila][n])
+            
+        # GUARDAR EN EL HISTORIAL: Agregamos la palabra intentada a la lista para el PDF
+        self.historial_pdf.append(palabra_intento)
             
         COLOR_VERDE = wx.Colour(83, 141, 78)
         COLOR_AMARILLO = wx.Colour(181, 159, 59)
